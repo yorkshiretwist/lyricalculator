@@ -1,6 +1,6 @@
 # Lyricalculator
 
-Welcome to this hacky but fun project which uses the (MusicBrainz)[https://musicbrainz.org/doc/MusicBrainz_API] and (lyrics.ovh)[https://lyricsovh.docs.apiary.io/] APIs to fetch song lyrics for an artist and calculate some basic stats on them.
+Welcome to this hacky but fun project which uses the [MusicBrainz](https://musicbrainz.org/doc/MusicBrainz_API) and [lyrics.ovh](https://lyricsovh.docs.apiary.io/) APIs to fetch song lyrics for an artist and calculate some basic stats on them.
 
 There's no machine learning or anything too clever here, so expect there to be bugs. For example, this project will say that the longest word found in David Bowie's lyrics is "Ch-ch-ch-ch-ch-changes". _C'est la vie_.
 
