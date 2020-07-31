@@ -210,19 +210,5 @@ namespace Lyricalculator.Core
         {
             return await _musicBrainzQuery.LookupArtistAsync(artistId);
         }
-
-        private async Task<Artist> GetArtist(Guid artistId)
-        {
-            var cachedArtist = _cacheManager.GetArtist(artistId);
-            if (cachedArtist != null)
-            {
-                return cachedArtist;
-            }
-
-            var musicBrainzArtist = await LookupArtist(artistId);
-            var artist = Artist.FromMusicBrainzModel(musicBrainzArtist);
-            _cacheManager.StoreArtist(artist);
-            return artist;
-        }
     }
 }
