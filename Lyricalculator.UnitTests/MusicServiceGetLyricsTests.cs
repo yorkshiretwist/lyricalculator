@@ -72,5 +72,28 @@ namespace Lyricalculator.UnitTests
 
             VerifyGetLyricsResponse(response, apiResponse.Status, apiResponse.Lyrics, lyricsApiQueryMock);
         }
+
+        [Test]
+        public void GetLyrics_LyricsCached_ReturnsCorrectResponse()
+        {
+            var cachedSong = new Song
+            {
+                LyricsStatus = LyricsStatus.Found,
+                Lyrics = "Here are the lyrics"
+            };
+
+            var cacheManagerMock = new Mock<ICacheManager>();
+            cacheManagerMock.Setup(x => x.GetSong(It.IsAny<Guid>())).Returns(cachedSong);
+
+            var lyricsApiQueryMock = new Mock<ILyricsApiQuery>();            
+
+            var response = GetService(lyricsApiQueryMock: lyricsApiQueryMock, cacheManagerMock: cacheManagerMock).GetLyrics(new Artist(), new Song()).Result;
+
+            response.Should().NotBeNull();
+            response.Status.Should().Equals(cachedSong.LyricsStatus);
+            response.Lyrics.Should().Equals(cachedSong.Lyrics);
+
+            lyricsApiQueryMock.Verify(x => x.FetchLyrics(It.IsAny<Artist>(), It.IsAny<Song>()), Times.Never);
+        }
     }
 }
