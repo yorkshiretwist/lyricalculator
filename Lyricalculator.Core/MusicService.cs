@@ -1,13 +1,10 @@
 ﻿using Lyricalculator.Core.Models;
 using MetaBrainz.MusicBrainz;
 using MetaBrainz.MusicBrainz.Interfaces.Entities;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Lyricalculator.Core
 {
@@ -17,14 +14,14 @@ namespace Lyricalculator.Core
     public class MusicService : IMusicService
     {
         private readonly IMusicBrainzQuery _musicBrainzQuery;
-        private readonly LyricsApiSettings _lyricsApiSettings;
+        private readonly ILyricsApiQuery _lyricsApiQuery;
         private readonly ILyricsParser _lyricsParser;
         private readonly ICacheManager _cacheManager;
 
-        public MusicService(LyricsApiSettings lyricsApiSettings, IMusicBrainzQuery musicBrainzQuery, ILyricsParser lyricsParser, ICacheManager cacheManager)
+        public MusicService(IMusicBrainzQuery musicBrainzQuery, ILyricsApiQuery lyricsApiQuery, ILyricsParser lyricsParser, ICacheManager cacheManager)
         {
             _musicBrainzQuery = musicBrainzQuery;
-            _lyricsApiSettings = lyricsApiSettings;
+            _lyricsApiQuery = lyricsApiQuery;
             _lyricsParser = lyricsParser;
             _cacheManager = cacheManager;
         }
@@ -60,48 +57,25 @@ namespace Lyricalculator.Core
                 return new LyricsResponse
                 {
                     Status = cachedSong.LyricsStatus,
-                    Lyrics = cachedSong.Lyrics,
-                    LyricsStats = cachedSong.LyricsStats
+                    Lyrics = cachedSong.Lyrics
                 };
             }
 
-            using (var httpClient = new HttpClient { BaseAddress = new Uri(_lyricsApiSettings.BaseAddress) })
-            using (var response = await httpClient.GetAsync($"{HttpUtility.UrlEncode(artist.Name)}/{HttpUtility.UrlEncode(song.Title)}"))
+            var lyricsResponse = await _lyricsApiQuery.FetchLyrics(artist, song);
+
+            song.Lyrics = lyricsResponse.Lyrics;
+            song.LyricsStatus = lyricsResponse.Status;
+
+            if (song.LyricsStatus == LyricsStatus.Found)
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    // write the lyrics and stats into the song now, to save time if this song is looked up again
-                    var lyricResponse = await response.Content.ReadAsStringAsync();
-                    dynamic lyricJson = JObject.Parse(lyricResponse);
-                    song.Lyrics = lyricJson.lyrics;
-                    song.LyricsStats = _lyricsParser.Parse(song.Lyrics);
-                    song.LyricsStatus = LyricsStatus.Found;
-                    _cacheManager.StoreSong(song);
-
-                    return new LyricsResponse
-                    {
-                        Status = LyricsStatus.Found,
-                        Lyrics = song.Lyrics,
-                        LyricsStats = song.LyricsStats
-                    };
-                }
-
-                // cache the song for performance, even though it hasn't been found
-                // manually delete the cache if you want to try to get the lyrics again
-                song.Lyrics = "(not found)";
-                song.LyricsStats = new LyricsStats();
-                song.LyricsStatus = LyricsStatus.NotFound;
-                _cacheManager.StoreSong(song);
-
-                var notFoundResponse = new LyricsResponse
-                {
-                    Status = song.LyricsStatus,
-                    Lyrics = song.Lyrics,
-                    LyricsStats = song.LyricsStats
-                };
-
-                return notFoundResponse;
+                song.LyricsStats = _lyricsParser.Parse(song.Lyrics);
             }
+
+            // cache the song for performance, even if it hasn't been found
+            // manually delete the cache if you want to try to get the lyrics again
+            _cacheManager.StoreSong(song);
+
+            return lyricsResponse;
         }
 
         /// <summary>

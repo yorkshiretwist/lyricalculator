@@ -8,7 +8,5 @@
         public LyricsStatus Status { get; set; }
 
         public string Lyrics { get; set; }
-
-        public LyricsStats LyricsStats { get; set; }
     }
 }

@@ -14,9 +14,9 @@ namespace Lyricalculator.Core
     {
         private readonly Query _query;
 
-        public MusicBrainzQuery(Query query)
+        public MusicBrainzQuery(MusicBrainzSettings musicBrainzSettings)
         {
-            _query = query;
+            _query = new Query(musicBrainzSettings.AppName, musicBrainzSettings.AppVersion, musicBrainzSettings.AppContact);
         }
 
         public async Task<IBrowseResults<IReleaseGroup>> BrowseReleaseGroupsAsync(IArtist artist, int? limit = null, int? offset = null, Include inc = Include.None, ReleaseType? type = null)
