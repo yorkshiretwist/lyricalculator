@@ -16,6 +16,13 @@ namespace Lyricalculator.Core
         public LyricsStats Parse(string lyrics)
         {
             var stats = new LyricsStats();
+            if (string.IsNullOrWhiteSpace(lyrics))
+            {
+                return stats;
+            }
+
+            // lowercase everything
+            lyrics = lyrics.ToLower();
 
             // remove common punctuation
             string[] temp = lyrics.Split(_settings.Punctuation, StringSplitOptions.RemoveEmptyEntries);
