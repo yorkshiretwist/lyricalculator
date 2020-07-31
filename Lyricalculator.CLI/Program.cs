@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using MetaBrainz.MusicBrainz;
 
 namespace Lyricalculator.CLI
 {
@@ -26,10 +27,11 @@ namespace Lyricalculator.CLI
 
             _spinner = new Spinner();
 
+            var musicBrainzQuery = new MusicBrainzQuery(new Query(_musicBrainzSettings.AppName, _musicBrainzSettings.AppVersion, _musicBrainzSettings.AppContact));
             var lyricsParser = new LyricsParser(_lyricsParserSettings);
             var cacheManager = new CacheManager(Path.Combine(Path.GetTempPath(), "Lyricalculator"));
 
-            _musicService = new MusicService(_musicBrainzSettings, _lyricsApiSettings, lyricsParser, cacheManager);
+            _musicService = new MusicService(_lyricsApiSettings, musicBrainzQuery, lyricsParser, cacheManager);
 
             WriteLogo();
             Start();

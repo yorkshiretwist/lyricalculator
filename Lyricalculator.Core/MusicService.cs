@@ -16,14 +16,14 @@ namespace Lyricalculator.Core
     /// </summary>
     public class MusicService : IMusicService
     {
-        private readonly Query _query;
+        private readonly IMusicBrainzQuery _musicBrainzQuery;
         private readonly LyricsApiSettings _lyricsApiSettings;
         private readonly ILyricsParser _lyricsParser;
         private readonly ICacheManager _cacheManager;
 
-        public MusicService(MusicBrainzSettings musicBrainzSettings, LyricsApiSettings lyricsApiSettings, ILyricsParser lyricsParser, ICacheManager cacheManager)
+        public MusicService(LyricsApiSettings lyricsApiSettings, IMusicBrainzQuery musicBrainzQuery, ILyricsParser lyricsParser, ICacheManager cacheManager)
         {
-            _query = new Query(musicBrainzSettings.AppName, musicBrainzSettings.AppVersion, musicBrainzSettings.AppContact);
+            _musicBrainzQuery = musicBrainzQuery;
             _lyricsApiSettings = lyricsApiSettings;
             _lyricsParser = lyricsParser;
             _cacheManager = cacheManager;
@@ -37,7 +37,7 @@ namespace Lyricalculator.Core
         /// <returns></returns>
         public async Task<SearchResponse<Artist>> SearchArtists(string name, int limit = 10)
         {
-            var searchResults = await _query.FindArtistsAsync(name, simple: true, limit: limit);
+            var searchResults = await _musicBrainzQuery.FindArtistsAsync(name, simple: true, limit: limit);
             var response = new SearchResponse<Artist>
             {
                 TotalCount = searchResults.TotalResults,
@@ -126,7 +126,7 @@ namespace Lyricalculator.Core
 
             while (true)
             {
-                var releases = await _query.BrowseReleaseGroupsAsync(musicBrainzArtist, 100, skip, Include.ReleaseRelationships, ReleaseType.Album);
+                var releases = await _musicBrainzQuery.BrowseReleaseGroupsAsync(musicBrainzArtist, 100, skip, Include.ReleaseRelationships, ReleaseType.Album);
 
                 if (releases == null || releases.Results == null || !releases.Results.Any())
                 {
@@ -141,7 +141,7 @@ namespace Lyricalculator.Core
             // now we've got all albums, get the first release for each, so we can get the songs
             foreach(var album in albums)
             {
-                var releaseGroup = await _query.LookupReleaseGroupAsync(album.ReleaseGroupId, Include.Releases, ReleaseStatus.Official);
+                var releaseGroup = await _musicBrainzQuery.LookupReleaseGroupAsync(album.ReleaseGroupId, Include.Releases, ReleaseStatus.Official);
                 if (releaseGroup == null || releaseGroup.Releases == null || !releaseGroup.Releases.Any())
                 {
                     continue;
@@ -158,7 +158,7 @@ namespace Lyricalculator.Core
 
                 // now get the songs
                 // TODO: this will only get the first 25 songs
-                var release = await _query.LookupReleaseAsync(album.ReleaseId, Include.Recordings);
+                var release = await _musicBrainzQuery.LookupReleaseAsync(album.ReleaseId, Include.Recordings);
                 var firstMedium = release.Media?.FirstOrDefault();
                 if (firstMedium == null)
                 {
@@ -234,7 +234,7 @@ namespace Lyricalculator.Core
 
         private async Task<IArtist> LookupArtist(Guid artistId)
         {
-            return await _query.LookupArtistAsync(artistId);
+            return await _musicBrainzQuery.LookupArtistAsync(artistId);
         }
 
         private async Task<Artist> GetArtist(Guid artistId)
