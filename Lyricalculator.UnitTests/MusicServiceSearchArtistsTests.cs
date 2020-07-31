@@ -6,16 +6,13 @@ using MetaBrainz.MusicBrainz.Interfaces.Entities;
 using MetaBrainz.MusicBrainz.Interfaces.Searches;
 using Moq;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lyricalculator.UnitTests
 {
     [TestFixture]
-    public class MusicServiceFindArtistTests : BaseMusicServiceTests
+    public class MusicServiceSearchArtistsTests : BaseMusicServiceTests
     {
 
         private IReadOnlyList<ISearchResult<IArtist>> GetArtistSearchResults(List<string> names)
