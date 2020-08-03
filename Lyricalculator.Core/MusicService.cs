@@ -142,7 +142,10 @@ namespace Lyricalculator.Core
                 album.Songs = firstMedium.Tracks?.Select(t => Song.FromMusicBrainzModel(t));
             }
 
-            _cacheManager.StoreArtistAlbums(artist.Id, albums);
+            if (albums.Any())
+            {
+                _cacheManager.StoreArtistAlbums(artist.Id, albums);
+            }
 
             return albums;
         }

@@ -8,12 +8,13 @@ There's no machine learning or anything too clever here, so expect there to be b
 
 The easiest way is to run the solution in Visual Studio. You can download a [free community version here](https://visualstudio.microsoft.com/free-developer-offers/), or there's a [free virtual machine with Visual Studio installed available to download here](https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/).
 
-Clone the repo to your machine and open `Lyricalculator.sln`. You should see the two projects in the Solution Explorer:
+Clone the repo to your machine and open `Lyricalculator.sln`. You should see the three projects in the Solution Explorer:
 
 ![Screenshot of Visual Studio showing the two Lyricalculator projects](img/solution.png)
 
 - Lyricalculator.CLI is a console app which allows you to look up artists, fetch songs and lyrics, and displays the stats
 - Lyricalculator.Core is the heart of the project, where the logic for calling the APIs and calculating stats is based
+- Lyricalculator.UnitTests contains some unite tests for different parts of the system
 
 Right-click the Lyricalculator.CLI project and choose 'Set as startup project':
 
@@ -96,9 +97,15 @@ Which would automatically do all that work for the first artist found with the g
 
 There is a class which is responsible for parsing lyrics and generating basic stats on a per-song basis. The lyrics and these stats are cached, so the calculation of stats over an artists entire set of songs is relatively quick.
 
-This class does nothing very clever; it removes stop words ('and', 'the'), words of insufficient length, and common punctuation. It then does a basic split on spaces to get the words. The stop words, length limit, and list of punctuation charaters, are all in a settings file in the CLI project.
+This class does nothing very clever; it:
 
-This could clearly be a lot better, especially as in my testing I got a lot of very dubious results (the 'ch-ch-ch-ch-ch-changes' example springs to mind).
+- Removes stop words ('and', 'the')
+- Removes words of insufficient length
+- Removes common punctuation
+ 
+It then does a basic split on spaces to get the words used for statistics. The stop words, length limit, and list of punctuation charaters, are all in a settings file in the CLI project.
+
+This could be a lot better, as in my testing I got a lot of very dubious results (the 'ch-ch-ch-ch-ch-changes' example springs to mind).
 
 ## Performance
 
@@ -108,9 +115,11 @@ In several places it would have been possible to write some multi-threaded code 
 
 I also have to admit I found the MusicBrainz API a little confusing - they have a more complex model than I expected (release groups, releases, media, recordings etc etc) so there may be more efficient ways of querying their API than I have employed.
 
-So subsequent requests for the same artist are quicker, the list of albums (with song metadata) and the details for each song (lyrics and stats) are cached with a simple file-based cache.
+To make subsequent requests for the same artist quicker, the list of albums (with song metadata) and the details for each song (lyrics and stats) are cached with a simple file-based cache.
 
-If this were a "proper" system I would certainly have stored these in some kind of document database; probably Elasticsearch, so I could take advantage of it's advanced text parsing.
+Albums and songs are relatively slow-moving, i.e. they don't change very often (unless the artist is [Steve Lawson](https://www.stevelawson.net/), who seemingly releases an album every few weeks). Therefore a cache with a long lifetime is probably acceptable.
+
+If this were a "proper" system I would certainly have stored these in some kind of document database; probably Elasticsearch, so I could take advantage of it's advanced text parsing. The cache could also be expired triggered by external events, or results from a background process.
 
 ## Further developments
 
@@ -122,6 +131,19 @@ A lot more interesting stats could be gleaned even from the current data, for ex
 - Number of words of different lengths (this is calculated per-song, but not used in the aggregate statistics)
 
 And with some cleverer text parsing using sentiment analysis, stats on how 'happy' or 'sad' songs are could be calculated. We could also calculate whether the writer is getting more or less self-obsessed over their career.
+
+## Unit tests
+
+There are several dependencies in the system which can be tested in isolation:
+
+- The lyrics parser class
+- The music service class
+- The MusicBrainz API proxy class
+- The lyrics API proxy class
+
+Each of which have a handful of unit tests to check how they work in both happy-path and unhappy-path scenarios. There isn't a high percentage coverage of unit tests, just enough to give a flavour.
+
+Run these unit tests using Test Explorer in Visual Studio, or you can use `dotnet test`.
 
 ## Wrapping up
 
